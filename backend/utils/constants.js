@@ -64,6 +64,7 @@ const ValidationMsg = {
   durationEmpty: "Duration is required",
   linkEmpty: "Link is required",
   descriptionEmpty: "Description is required",
+  incorrectImage: "Please upload an image file (JPG/PNG/JPEG)",
 };
 
 const ApiResponseCode = {

@@ -1,5 +1,4 @@
-const { check } = require("express-validator");
-const { validationResult } = require("express-validator");
+const { validationResult, check } = require("express-validator");
 const Utils = require("../../utils/utils");
 const { ApiResponseCode, TableFields } = require("../../utils/constants");
 const UserService = require("../../db/services/UserService");
@@ -18,15 +17,16 @@ exports.userRegister = async (req, res, next) => {
     const user = await UserService.getUserByEmail(
       req.body[TableFields.email]
     ).execute();
-    console.log("user ", user);
+    console.log("user ", user?.firstName);
     if (user) {
       return res.json({
-        status: ApiResponseCode.ValidationMsg,
+        status: ApiResponseCode.ResponseFail,
         message: "Email is already exit",
       });
     } else {
       const newUser = await UserService.createUser(req).execute();
       const token = newUser.createAuthToken();
+
       return res.json({
         status: ApiResponseCode.ResponseSuccess,
         result: { user: newUser[TableFields.ID], token: token },
@@ -41,6 +41,114 @@ exports.userRegister = async (req, res, next) => {
   }
 };
 
+exports.confirmCode = async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+
+  try {
+    // fetch user by email and verification code
+    const user = await UserService.confirmCode(
+      req.body.email,
+      req.body.verificationCode
+    )
+      .withId()
+      .withEmail()
+      .withBasicInfo()
+      .withUserType()
+      .withVerificationCode()
+      .execute();
+    if (user) {
+      res.json({
+        status: ApiResponseCode.ResponseSuccess,
+        result: { message: "Verification Successful !!", token: "" },
+      });
+    } else {
+      res.json({
+        status: ApiResponseCode.ResponseFail,
+        result: { message: "invalid code", token: "" },
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      result: { message: error.message, token: "" },
+    });
+  }
+};
+
+exports.login = async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    return res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+
+  try {
+    const user = await UserService.getUserByEmail(req.body.email).execute();
+    console.log(user);
+    if (user) {
+      const isValidPassword = await user.isValidPassword(req.body.password);
+      if (isValidPassword) {
+        const otp = Math.floor(1000 + Math.random() * 9000);
+        Utils.sendMail({
+          to: user[TableFields.email],
+          subject: "Account Created !!",
+          text: "",
+          html: `<p> Please verify code : ${otp}</p>`,
+        });
+        user[TableFields.verificationCode] = otp;
+        console.log(user);
+        await user.save();
+        res.json({
+          status: ApiResponseCode.ResponseSuccess,
+          result: {
+            message: "Password verified",
+            user: {
+              [TableFields.ID]: user[TableFields.ID],
+              [TableFields.email]: user[TableFields.email],
+            },
+          },
+        });
+      } else {
+        res.json({
+          status: ApiResponseCode.ResponseFail,
+          result: {
+            message: "Invalid password",
+          },
+        });
+      }
+    } else {
+      res.json({
+        status: ApiResponseCode.ResponseFail,
+        result: {
+          message: "Invalid email",
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      result: {
+        message: error.message,
+      },
+    });
+  }
+};
+
 exports.validate = (method) => {
   switch (method) {
     case "userRegister": {
@@ -51,6 +159,20 @@ exports.validate = (method) => {
         check("password", "Password length must be greater than 3")
           .exists()
           .isLength({ min: 4 }),
+      ];
+    }
+    case "login": {
+      return [
+        check("email", "Please enter email").exists().isEmail(),
+        check("password", "Password length must be greater than 3")
+          .exists()
+          .isLength({ min: 4 }),
+      ];
+    }
+    case "confirmCode": {
+      return [
+        check("email", "Please enter email").exists().isEmail(),
+        check("verificationCode", "Please enter verification code ").exists(),
       ];
     }
     case "default":

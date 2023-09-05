@@ -78,7 +78,7 @@ userSchema.methods.generateHash = async function (password) {
 };
 
 userSchema.methods.isValidPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password.toString(), this.password);
 };
 
 userSchema.methods.createAuthToken = function () {

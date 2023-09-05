@@ -1,13 +1,17 @@
 const { TableFields, UserTypes } = require("../../utils/constants");
 const user = require("../models/user");
-
+const Utils = require("../../utils/utils");
 class UserService {
   static getUserByEmail = (email) => {
     return new ProjectionBuilder(async function () {
       if (email) {
         try {
-         const fetchedUser = await user.findOne({ [TableFields.email]: email });
-          return fetchedUser;
+          return await user.findOne(
+            {
+              [TableFields.email]: email,
+            },
+            this
+          );
         } catch (error) {
           console.log(error);
           throw error;
@@ -27,11 +31,35 @@ class UserService {
         const hashedPassword = await newUser.generateHash(req.body.password);
         newUser[TableFields.password] = hashedPassword;
         console.log(newUser);
+        const otp = Math.floor(1000 + Math.random() * 9000);
+        Utils.sendMail({
+          to: newUser[TableFields.email],
+          subject: "Account Created !!",
+          text: "",
+          html: `<p> Please verify code : ${otp}</p>`,
+        });
+        newUser[TableFields.verificationCode] = otp;
         await newUser.save();
         return newUser;
       } catch (error) {
         throw error;
       }
+    });
+  };
+  static confirmCode = (email, code) => {
+    return new ProjectionBuilder(async function () {
+      return await user.findOne(
+        {
+          [TableFields.email]: email,
+          [TableFields.verificationCode]: code,
+        },
+        this
+      );
+    });
+  };
+  static getUserById = (id) => {
+    return new ProjectionBuilder(async function () {
+      return await user.findById(id, this);
     });
   };
 }
