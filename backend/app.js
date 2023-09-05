@@ -6,11 +6,18 @@ const apiRouter = require("./routes/apiRoute");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+app.use(
+  express.urlencoded({ extended: true, limit: "5gb", parameterLimit: 50000 })
+);
+app.use(express.json({ limit: "5gb" }));
 
 app.use(cors());
 
 apiRouter(app);
-
+app.use((req, res, next) => {
+  console.log("page not found");
+  return res.json("page not found");
+});
 Db.initConnection(() => {
   app.listen(PORT, () => {
     console.log(`server is running on ${PORT}`);

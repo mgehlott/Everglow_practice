@@ -40,6 +40,7 @@ const TableNames = {
   Campaign: "campaigns",
   Occasion: "occasions",
   Candle: "candles",
+  NewsFeed: "newsfeeds",
 };
 
 const UserTypes = {
@@ -60,9 +61,21 @@ const ValidationMsg = {
   nameEmpty: "Name is required",
   titleEmpty: "Title is required",
   startDateEmpty: "Start Date is required",
-    durationEmpty: "Duration is required",
-    linkEmpty: "Link is required",
-  descriptionEmpty:"Description is required"
+  durationEmpty: "Duration is required",
+  linkEmpty: "Link is required",
+  descriptionEmpty: "Description is required",
+};
+
+const ApiResponseCode = {
+  ResponseFail: 0,
+  ClientOrServerError: 400,
+  ResponseSuccess: 200,
+  AuthError: 401,
+  AccountDeleted: 403,
+  NotFound: 404,
+  ValidationMsg: 422,
+  UnderMaintanance: 503,
+  ForceUpdate: 426,
 };
 
 module.exports = {
@@ -71,4 +84,5 @@ module.exports = {
   ValidationMsg,
   UserTypes,
   Visibility,
+  ApiResponseCode,
 };

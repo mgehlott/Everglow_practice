@@ -21,3 +21,10 @@ exports.addZero = (i) => {
   }
   return i;
 };
+
+exports.extractErrors = (errors) => {
+  const extractErrors = [];
+  console.log(errors);
+  errors.map((err) => extractErrors.push({ [err.path]: err.msg }));
+  return extractErrors;
+};
