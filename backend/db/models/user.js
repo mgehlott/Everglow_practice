@@ -7,6 +7,7 @@ const {
   TableNames,
 } = require("../../utils/constants");
 const Utils = require("../../utils/utils");
+const jwt = require("jsonwebtoken");
 
 const userSchema = mongoose.Schema(
   {
@@ -71,11 +72,23 @@ const userSchema = mongoose.Schema(
 );
 
 userSchema.methods.generateHash = async function (password) {
+  password = password + "";
+  console.log(password, typeof password);
   return await bcrypt.hash(password, 8);
 };
 
 userSchema.methods.isValidPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password.toString(), this.password);
+};
+
+userSchema.methods.createAuthToken = function () {
+  const token = jwt.sign(
+    {
+      [TableFields.ID]: this[TableFields.ID],
+    },
+    process.env.SECRET_KEY
+  );
+  return token;
 };
 
 userSchema.pre("save", async function (next) {
@@ -84,10 +97,7 @@ userSchema.pre("save", async function (next) {
   } else {
     this[TableFields.updatedAt] = Utils.getDate();
   }
-  // hash password here
-  if (user.isModified("password")) {
-    user.password = await bcrypt.hash(user.password, 8);
-  }
+
   next();
 });
 
