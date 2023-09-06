@@ -35,7 +35,7 @@ exports.createCampaign = async (req, res) => {
 exports.getCampaign = async (req, res) => {
   try {
     const campaign = await CampaignService.getCampaignById(
-      req.body.campaignId
+      req.params.campaignId
     ).execute();
     res.json({
       status: ApiResponseCode.ResponseSuccess,

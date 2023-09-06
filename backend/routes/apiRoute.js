@@ -32,7 +32,7 @@ const router = function (app) {
     CampaignController.validate("createCampaign"),
     CampaignController.createCampaign
   );
-  app.get("/api/getCampaign", CampaignController.getCampaign);
+  app.get("/api/getCampaign/:campaignId", CampaignController.getCampaign);
 
   app.post(
     "/api/addComment",
@@ -41,7 +41,7 @@ const router = function (app) {
     CampaignController.addComment
   );
   app.post(
-    "/api/addGuestComment",
+    "/api/addGuestComment/:campaignId3",
     CampaignController.validate("addComment"),
     CampaignController.addComment
   );
