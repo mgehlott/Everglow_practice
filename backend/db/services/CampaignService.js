@@ -3,6 +3,7 @@ const campaign = require("../models/campaign");
 const Utils = require("../../utils/utils");
 const storage = require("../../utils/storage");
 const { Folders } = require("../../utils/metadata");
+const CandleService = require("./CandleService");
 
 class CampaignService {
   static createCampaign = (req) => {
@@ -56,10 +57,62 @@ class CampaignService {
       if (req.user) {
         data[TableFields.userId] = req.user._id;
       }
-      const campaign = await campaign.findByIdAndUpdate(req.params.campaignId, {
-        $push: { [TableFields.comments]: data },
+      console.log(req.params.campaignId);
+      const result = await campaign.findByIdAndUpdate(
+        req.params.campaignId,
+        {
+          $push: { [TableFields.comments]: data },
+        },
+        { new: true }
+      );
+      console.log("res", result);
+      return result;
+    });
+  };
+
+  static deleteComment = (req) => {
+    return new ProjectionBuilder(async function () {
+      const campaignId = req.body.campaignId;
+      const commentId = req.params.commentId;
+      console.log(campaignId, commentId);
+      return await campaign.findByIdAndUpdate(campaignId, {
+        $pull: {
+          [TableFields.comments]: { [TableFields.ID]: commentId },
+        },
       });
-      return campaign;
+    });
+  };
+
+  static deleteCandle = (id) => {
+    return new ProjectionBuilder(async function () {
+      return await campaign.updateMany(
+        {
+          "candleType.candleId": id,
+        },
+        {
+          $set: {
+            [TableFields.candleType]: null,
+          },
+        }
+      );
+    });
+  };
+  static updateCandles = (req) => {
+    return new ProjectionBuilder(async function () {
+      const fetchedCandle = await CandleService.getCampaignById(req.params.candleId);
+      return await campaign.updateMany(
+        {
+          "candleType.candleId": req.params.candleId,
+        },
+        {
+          $set: {
+            [ TableFields.candleType ]: {
+              [ TableFields.title ]: req.body.title,
+              [TableFields.icon] : fetchedCandle[TableFields.icon]
+            }
+          },
+        }
+      );
     });
   };
 }

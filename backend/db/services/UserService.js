@@ -62,6 +62,34 @@ class UserService {
       return await user.findById(id, this);
     });
   };
+  static changePassword = (req) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        let fetchUser;
+        if (req.user)
+        {
+          fetchUser = await user.findById(req.user[TableFields.ID]);
+        }
+        else {
+          fetchUser = await this.getUserByEmail(req.body.email);
+        }
+        const isValidPassword = fetchUser.isValidPassword(
+          req.body.currentPassword
+        );
+        if (!isValidPassword) throw new Error('Wrong current password');
+        if (fetchUser) {
+          fetchUser[TableFields.password] = await fetchUser.generateHash(
+            req.body[TableFields.password]
+          );
+          return await fetchUser.save();
+        }
+      } catch (error) {
+        throw error;
+      }
+    });
+  };
+  
+
 }
 
 class ProjectionBuilder {
@@ -101,6 +129,7 @@ class ProjectionBuilder {
       } else {
         projection.populate = Object.values(projection.populate);
       }
+
       return await methodToExecute.call(projection);
     };
   }

@@ -40,7 +40,7 @@ exports.extractErrors = (errors) => {
 
 exports.generateVerificationCode = () => {};
 
-exports.sendMail = ({ to, subject, text, html }) => {
+exports.sendMail = ({ to, subject, text = "", html = "" }) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     host: "smtp.gmail.com",
@@ -87,4 +87,12 @@ exports.generateRandomFileName = (filename) => {
   let timestamp = new Date().getTime().toString();
   filename = timestamp + "_" + random + "." + ext;
   return filename;
+};
+
+exports.getBaseURL = () => {
+  let baseURL = process.env.HOST;
+  if (process.env.isProduction == "false") {
+    baseURL += ":" + process.env.PORT;
+  }
+  return baseURL;
 };

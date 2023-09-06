@@ -62,12 +62,47 @@ exports.addComment = async (req, res) => {
     });
   }
   try {
-    const updatedCampaign = CampaignService.addComment(req);
+    const updatedCampaign = await CampaignService.addComment(req).execute();
+    console.log(updatedCampaign);
     res.json({
       status: ApiResponseCode.ResponseSuccess,
       result: updatedCampaign,
     });
   } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteComment = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    console.log("error");
+    return res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+  try {
+    const update = await CampaignService.deleteComment(req).execute();
+    console.log("deleted", update);
+    if (update) {
+      res.json({
+        status: ApiResponseCode.ResponseSuccess,
+        result: "deleted",
+      });
+    } else {
+      res.json({
+        status: ApiResponseCode.ResponseFail,
+        error: "something went wrong",
+      });
+    }
+  } catch (error) {
+    console.log(error);
     res.json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
@@ -94,6 +129,9 @@ exports.validate = (method) => {
         check("name", "Invalid user name").exists(),
         check("description", "Invalid description").exists(),
       ];
+    }
+    case "deleteComment": {
+      return [check("campaignId", "Invalid campaign id").exists()];
     }
 
     case "default":

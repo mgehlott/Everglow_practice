@@ -73,11 +73,12 @@ const userSchema = mongoose.Schema(
 
 userSchema.methods.generateHash = async function (password) {
   password = password + "";
-  console.log(password, typeof password);
+  // console.log(password, typeof password);
   return await bcrypt.hash(password, 8);
 };
 
 userSchema.methods.isValidPassword = async function (password) {
+  console.log("pass", password, this.password);
   return await bcrypt.compare(password.toString(), this.password);
 };
 

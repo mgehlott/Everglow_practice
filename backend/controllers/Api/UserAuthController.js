@@ -86,7 +86,6 @@ exports.confirmCode = async (req, res) => {
 
 exports.login = async (req, res) => {
   const errors = validationResult(req);
-
   if (!errors.isEmpty()) {
     const extractedErrors = Utils.extractErrors(errors.array());
     console.log(extractedErrors);
@@ -95,7 +94,6 @@ exports.login = async (req, res) => {
       errors: extractedErrors,
     });
   }
-
   try {
     const user = await UserService.getUserByEmail(req.body.email).execute();
     console.log(user);
@@ -173,6 +171,11 @@ exports.validate = (method) => {
       return [
         check("email", "Please enter email").exists().isEmail(),
         check("verificationCode", "Please enter verification code ").exists(),
+      ];
+    }
+    case "changePassword": {
+      return [
+        check("password", "Invalid password").exists().isLength({ min: 4 }),
       ];
     }
     case "default":

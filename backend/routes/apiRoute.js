@@ -3,6 +3,7 @@ const ApiAuthMiddleware = require("../middlewares/apiAuth");
 const CampaignController = require("../controllers/Api/CampaignController");
 const ApiController = require("../controllers/Api/ApiController");
 const ImageHandler = require("../middlewares/imageHandler");
+const AdminAuthController = require("../controllers/AdminAuthController");
 const { TableFields } = require("../utils/constants");
 
 const router = function (app) {
@@ -27,7 +28,6 @@ const router = function (app) {
   app.post(
     "/api/createCampaign",
     ApiAuthMiddleware.auth,
-
     ImageHandler.uploadSingle([TableFields.image]),
     CampaignController.validate("createCampaign"),
     CampaignController.createCampaign
@@ -41,7 +41,13 @@ const router = function (app) {
     CampaignController.addComment
   );
   app.post(
-    "/api/addGuestComment/:campaignId3",
+    "/api/addGuestComment/:campaignId",
+    CampaignController.validate("addComment"),
+    CampaignController.addComment
+  );
+  app.post(
+    "/api/addComment/:campaignId",
+    ApiAuthMiddleware.auth,
     CampaignController.validate("addComment"),
     CampaignController.addComment
   );
@@ -50,6 +56,31 @@ const router = function (app) {
     "/api/occasion",
     ApiAuthMiddleware.auth,
     ApiController.getAllOccasionType
+  );
+
+  //-------------- newsfeed--------
+  app.get("/api/newsfeed", ApiController.getAllNewsFeed);
+
+  //--------password --------------------
+  app.post(
+    "/api/updatePassword",
+    ApiAuthMiddleware.auth,
+    AdminAuthController.validate("changePassword"),
+    AdminAuthController.changePassword
+  );
+
+  app.post(
+    "/api/forgotPassword",
+    AdminAuthController.validate("forgotPassword"),
+    AdminAuthController.forgotPassword
+  );
+
+  //------------- message -------------
+  app.post(
+    "/api/sendMessage",
+    ApiAuthMiddleware.auth,
+    ApiController.validate("sendMessage"),
+    ApiController.sendMessage
   );
 };
 

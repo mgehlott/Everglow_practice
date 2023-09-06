@@ -38,6 +38,7 @@ newsfeedSchema.pre("save", function (next) {
   } else {
     this[TableFields.updatedAt] = Utils.getDate();
   }
+  next();
 });
 
 const newsfeed = mongoose.model(TableNames.NewsFeed, newsfeedSchema);
