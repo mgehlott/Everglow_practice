@@ -1,7 +1,6 @@
 const Utils = require("../utils/utils");
 const path = require("path");
 const fs = require("fs");
-const { rejects } = require("assert");
 
 exports.addFile = async (parentDir, originalFileName, file) => {
   if (!originalFileName || !file) return "";
@@ -25,9 +24,15 @@ exports.removeFile = async (parentDir, fileKey) => {
   if (!fileKey) return false;
   try {
     const isExist = await fs.existsSync(parentDir + "/" + fileKey);
+    console.log(isExist);
     if (isExist) {
-      await fs.unlink(parentDir + "/" + fileKey);
+      await fs.unlink(parentDir + "/" + fileKey, (err) => {
+        if (err) {
+          console.log(err);
+        }
+      });
     }
+    console.log("removed");
     return true;
   } catch (error) {
     console.log(error);

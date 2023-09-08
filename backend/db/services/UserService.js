@@ -6,6 +6,7 @@ class UserService {
     return new ProjectionBuilder(async function () {
       if (email) {
         try {
+          console.log(email);
           return await user.findOne(
             {
               [TableFields.email]: email,
@@ -66,17 +67,22 @@ class UserService {
     return new ProjectionBuilder(async function () {
       try {
         let fetchUser;
-        if (req.user)
-        {
+        if (req.user) {
           fetchUser = await user.findById(req.user[TableFields.ID]);
+        } else {
+          fetchUser = await this.getUserByEmail(req.body.email).execute();
         }
-        else {
-          fetchUser = await this.getUserByEmail(req.body.email);
-        }
-        const isValidPassword = fetchUser.isValidPassword(
+        console.log("fu", fetchUser);
+        const isValidPassword = await fetchUser.isValidPassword(
           req.body.currentPassword
         );
-        if (!isValidPassword) throw new Error('Wrong current password');
+        console.log(
+          "isvalid",
+          isValidPassword,
+          "current pass",
+          req.body.currentPassword
+        );
+        if (!isValidPassword) throw new Error("Wrong current password");
         if (fetchUser) {
           fetchUser[TableFields.password] = await fetchUser.generateHash(
             req.body[TableFields.password]
@@ -88,8 +94,23 @@ class UserService {
       }
     });
   };
-  
-
+  static updatePasswordForForgot = (email, password) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        const fetchUser = await UserService.getUserByEmail(email).execute();
+        if (fetchUser) {
+          fetchUser[TableFields.password] = await fetchUser.generateHash(
+            password
+          );
+          return await fetchUser.save();
+        } else {
+          throw new Error("Invalid mail");
+        }
+      } catch (error) {
+        throw error;
+      }
+    });
+  };
 }
 
 class ProjectionBuilder {

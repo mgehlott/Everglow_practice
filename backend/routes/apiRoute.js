@@ -24,6 +24,21 @@ const router = function (app) {
     UserAuthController.confirmCode
   );
 
+  // ----------- occasion ----------
+
+  app.get(
+    "/api/getAllOccasion",
+    ApiAuthMiddleware.auth,
+    ApiController.getAllOccasionType
+  );
+
+  //-------------candle -----------
+  app.get(
+    "/api/getCandlesType",
+    ApiAuthMiddleware.auth,
+    ApiController.getAllCandleType
+  );
+
   //------- campaign route ------------
   app.post(
     "/api/createCampaign",
@@ -34,12 +49,12 @@ const router = function (app) {
   );
   app.get("/api/getCampaign/:campaignId", CampaignController.getCampaign);
 
-  app.post(
-    "/api/addComment",
-    ApiAuthMiddleware.auth,
-    CampaignController.validate("addComment"),
-    CampaignController.addComment
-  );
+  // app.post(
+  //   "/api/addComment",
+  //   ApiAuthMiddleware.auth,
+  //   CampaignController.validate("addComment"),
+  //   CampaignController.addComment
+  // );
   app.post(
     "/api/addGuestComment/:campaignId",
     CampaignController.validate("addComment"),
@@ -69,10 +84,22 @@ const router = function (app) {
     AdminAuthController.changePassword
   );
 
-  app.post(
+  app.patch(
     "/api/forgotPassword",
     AdminAuthController.validate("forgotPassword"),
     AdminAuthController.forgotPassword
+  );
+
+  app.patch(
+    "/api/verifyForgotPasswordRequest",
+    UserAuthController.validate("confirmForgotPasswordRequest"),
+    UserAuthController.confirmForgotPasswordRequest
+  );
+
+  app.patch(
+    "/api/updateForgotPassword",
+    UserAuthController.validate("forgetAndUpdatePassword"),
+    UserAuthController.forgetAndUpdatePassword
   );
 
   //------------- message -------------
@@ -82,6 +109,11 @@ const router = function (app) {
     ApiController.validate("sendMessage"),
     ApiController.sendMessage
   );
+
+  // ------------- other routes -----------
+  app.get("/api/aboutUs", ApiController.getAboutUs);
+  app.get("/api/privacyPolicy", ApiController.getPrivacyPolicy);
+  app.get("/api/termsAndCondition", ApiController.getTermsAndCondition);
 };
 
 module.exports = router;

@@ -176,6 +176,7 @@ campaignSchema.pre("save", function (next) {
   } else {
     this[TableFields.updatedAt] = Utils.getDate();
   }
+  next();
 });
 
 const campaign = mongoose.model(TableNames.Campaign, campaignSchema);

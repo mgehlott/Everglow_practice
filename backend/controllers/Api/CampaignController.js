@@ -17,8 +17,9 @@ exports.createCampaign = async (req, res) => {
   console.log("file", req.file);
   try {
     const newCampaign = await CampaignService.createCampaign(req).execute();
+    console.log("created", newCampaign);
     if (newCampaign) {
-      res.json({
+      return res.json({
         status: ApiResponseCode.ResponseSuccess,
         result: newCampaign,
       });

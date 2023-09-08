@@ -8,17 +8,24 @@ const CandleService = require("./CandleService");
 class CampaignService {
   static createCampaign = (req) => {
     return new ProjectionBuilder(async function () {
+      console.log("date", req.body.startDate);
       const date = Utils.getDateFormat(req.body[TableFields.startDate]);
       const creator = {
         [TableFields.name]: req.user[TableFields.name],
         [TableFields.email]: req.user[TableFields.email],
         [TableFields.userId]: req.user[TableFields.ID],
       };
+      console.log("creator", creator);
       const newCampaign = new campaign();
       newCampaign[TableFields.creator] = creator;
-      newCampaign[TableFields.candleType] = req.body[TableFields.candleType];
-      newCampaign[TableFields.occasionType] =
-        req.body[TableFields.occasionType];
+      console.log(JSON.parse(req.body[TableFields.candleType]));
+      console.log(JSON.parse(req.body[TableFields.occasionType]));
+      newCampaign[TableFields.candleType] = JSON.parse(
+        req.body[TableFields.candleType]
+      );
+      newCampaign[TableFields.occasionType] = JSON.parse(
+        req.body[TableFields.occasionType]
+      );
       newCampaign[TableFields.visibility] = req.body[TableFields.visibility];
       newCampaign[TableFields.title] = req.body[TableFields.title];
       newCampaign[TableFields.description] = req.body[TableFields.description];
@@ -34,6 +41,8 @@ class CampaignService {
             req.file.buffer
           );
           newCampaign[TableFields.image] = filename;
+          console.log(filename);
+
           return await newCampaign.save();
         } catch (error) {
           console.log(error);
@@ -45,7 +54,18 @@ class CampaignService {
 
   static getCampaignById = (id) => {
     return new ProjectionBuilder(async function () {
-      return await campaign.findById(id, this);
+      return await campaign.aggregate([
+        {
+          $addFields: {
+            imageUrl: {
+              $concat: [
+                storage.getUrlParentDir(Folders.CampaignImage),
+                "$image",
+              ],
+            },
+          },
+        },
+      ]);
     });
   };
   static addComment = (req) => {
@@ -99,17 +119,19 @@ class CampaignService {
   };
   static updateCandles = (req) => {
     return new ProjectionBuilder(async function () {
-      const fetchedCandle = await CandleService.getCampaignById(req.params.candleId);
+      const fetchedCandle = await CandleService.getCandleById(
+        req.params.candleId
+      );
       return await campaign.updateMany(
         {
           "candleType.candleId": req.params.candleId,
         },
         {
           $set: {
-            [ TableFields.candleType ]: {
-              [ TableFields.title ]: req.body.title,
-              [TableFields.icon] : fetchedCandle[TableFields.icon]
-            }
+            [TableFields.candleType]: {
+              [TableFields.title]: req.body.title,
+              [TableFields.icon]: fetchedCandle[TableFields.icon],
+            },
           },
         }
       );
@@ -167,6 +189,7 @@ class ProjectionBuilder {
       } else {
         projection.populate = Object.values(projection.populate);
       }
+      console.log("resturn");
       return await methodToExecute.call(projection);
     };
   }

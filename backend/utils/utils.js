@@ -73,6 +73,8 @@ exports.isImageFile = (fileOriginalname) => {
     : true;
 };
 exports.getDateFormat = (d) => {
+  console.log(d);
+  d = new Date(d);
   return (
     d.getFullYear() +
     "-" +

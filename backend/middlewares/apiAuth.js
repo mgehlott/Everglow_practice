@@ -13,6 +13,7 @@ exports.auth = async (req, res, next) => {
     ).execute();
     console.log("auth user", user);
     if (user) {
+      user.name = user[TableFields.firstName] + user[TableFields.lastName];
       req.user = user;
       next();
     } else {

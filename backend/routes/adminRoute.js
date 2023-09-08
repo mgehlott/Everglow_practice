@@ -39,7 +39,7 @@ const router = function (app) {
     AdminController.validate("addCandle"),
     AdminController.addCandle
   );
-  app.post(
+  app.delete(
     "/admin/deleteCandle/:candleId",
     AuthMiddleware.adminAuth,
     AdminController.deleteCandle
@@ -52,9 +52,17 @@ const router = function (app) {
     AdminController.updateCandle
   );
 
-  // --------- password ----------
-
+  //---------occasion -----------
   app.post(
+    "/admin/addOccasion",
+    AuthMiddleware.adminAuth,
+    ImageHandler.uploadSingle("icon"),
+    AdminController.validate("addOccasion"),
+    AdminController.addOccasion
+  );
+
+  // --------- password ----------
+  app.patch(
     "/admin/updatePassword",
     AuthMiddleware.adminAuth,
     AdminAuthController.validate("changePassword"),
@@ -74,8 +82,8 @@ const router = function (app) {
   );
   app.post(
     "admin/forgotUpdatePassword",
-    AdminAuthController.validate("forgotUpdatePassword"),
-    AdminAuthController.changePassword
+    UserAuthController.validate('forgetAndUpdatePassword'),
+    UserAuthController.forgetAndUpdatePassword
   );
 };
 

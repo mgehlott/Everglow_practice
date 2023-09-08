@@ -1,6 +1,10 @@
 const { validationResult, check } = require("express-validator");
 const Utils = require("../../utils/utils");
-const { ApiResponseCode, TableFields } = require("../../utils/constants");
+const {
+  ApiResponseCode,
+  TableFields,
+  UserTypes,
+} = require("../../utils/constants");
 const UserService = require("../../db/services/UserService");
 
 exports.userRegister = async (req, res, next) => {
@@ -25,11 +29,11 @@ exports.userRegister = async (req, res, next) => {
       });
     } else {
       const newUser = await UserService.createUser(req).execute();
-      const token = newUser.createAuthToken();
+      //  const token = newUser.createAuthToken();
 
       return res.json({
         status: ApiResponseCode.ResponseSuccess,
-        result: { user: newUser[TableFields.ID], token: token },
+        result: { user: newUser[TableFields.ID] },
       });
     }
   } catch (error) {
@@ -43,7 +47,6 @@ exports.userRegister = async (req, res, next) => {
 
 exports.confirmCode = async (req, res) => {
   const errors = validationResult(req);
-
   if (!errors.isEmpty()) {
     const extractedErrors = Utils.extractErrors(errors.array());
     console.log(extractedErrors);
@@ -66,9 +69,15 @@ exports.confirmCode = async (req, res) => {
       .withVerificationCode()
       .execute();
     if (user) {
+      const response = { message: "Verification Successful !!" };
+      if (user[TableFields.userType].includes(UserTypes.Verified)) {
+        const token = user.createAuthToken();
+        response.token = token;
+      }
+
       res.json({
         status: ApiResponseCode.ResponseSuccess,
-        result: { message: "Verification Successful !!", token: "" },
+        result: response,
       });
     } else {
       res.json({
@@ -103,9 +112,9 @@ exports.login = async (req, res) => {
         const otp = Math.floor(1000 + Math.random() * 9000);
         Utils.sendMail({
           to: user[TableFields.email],
-          subject: "Account Created !!",
+          subject: "Login request !!",
           text: "",
-          html: `<p> Please verify code : ${otp}</p>`,
+          html: `<p> Please verify code for login: ${otp}</p>`,
         });
         user[TableFields.verificationCode] = otp;
         console.log(user);
@@ -147,6 +156,90 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.confirmForgotPasswordRequest = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+  try {
+    // fetch user by email and verification code
+    const user = await UserService.confirmCode(
+      req.body.email,
+      req.body.verificationCode
+    )
+      .withId()
+      .withEmail()
+      .withBasicInfo()
+      .withUserType()
+      .withVerificationCode()
+      .execute();
+    if (user) {
+      res.json({
+        status: ApiResponseCode.ResponseSuccess,
+        result: { message: "Verification Successful !!" },
+      });
+    } else {
+      res.json({
+        status: ApiResponseCode.ResponseFail,
+        result: { message: "invalid code" },
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      result: { message: error.message },
+    });
+  }
+};
+
+exports.forgetAndUpdatePassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+  try {
+    // fetch user by email and verification code
+    console.log(req.body);
+    const user = await UserService.updatePasswordForForgot(
+      req.body.email,
+      req.body.password
+    )
+      .withId()
+      .withEmail()
+      .withBasicInfo()
+      .withUserType()
+      .withVerificationCode()
+      .execute();
+    if (user) {
+      const token = user.createAuthToken();
+      res.json({
+        status: ApiResponseCode.ResponseSuccess,
+        result: { message: "Change Successful !!", token: token },
+      });
+    } else {
+      res.json({
+        status: ApiResponseCode.ResponseFail,
+        result: { message: "invalid code" },
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      result: { message: error.message },
+    });
+  }
+};
+
 exports.validate = (method) => {
   switch (method) {
     case "userRegister": {
@@ -178,6 +271,19 @@ exports.validate = (method) => {
         check("password", "Invalid password").exists().isLength({ min: 4 }),
       ];
     }
+    case "confirmForgotPasswordRequest": {
+      return [
+        check("email", "Please enter email").exists().isEmail(),
+        check("verificationCode", "Please enter verification code ").exists(),
+      ];
+    }
+    case "forgetAndUpdatePassword": {
+      return [
+        check("email", "Please enter email").exists().isEmail(),
+        check("password", "Invalid password").exists().isLength({ min: 4 }),
+      ];
+    }
+
     case "default":
       return [];
     default:

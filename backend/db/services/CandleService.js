@@ -43,7 +43,8 @@ class CandleService {
   };
   static updateCandle = (req) => {
     return new ProjectionBuilder(async function () {
-      const currCandle = await candle.findById(req.params.id);
+      const currCandle = await candle.findById(req.params.candleId);
+      console.log("currant candle", currCandle);
       if (!currCandle) throw new Error("Invalid candle id");
       if (req.body.title) {
         currCandle[TableFields.title] = req.body.title;
@@ -54,13 +55,14 @@ class CandleService {
             Folders.IconImage,
             currCandle[TableFields.icon]
           );
+          console.log("candle icon removed", isIconDeleted);
         }
         const filename = await storage.addFile(
           Folders.IconImage,
           req.file.originalname,
           req.file.buffer
         );
-        console.log("image added", filename);
+        console.log("update candle icon added", filename);
         currCandle[TableFields.icon] = filename;
       }
       return await currCandle.save();
@@ -70,6 +72,20 @@ class CandleService {
   static getCandleById = (id) => {
     return new ProjectionBuilder(async function () {
       return await candle.findById(id, this);
+    });
+  };
+
+  static getAllCandles = () => {
+    return new ProjectionBuilder(async function () {
+      return await candle.aggregate([
+        {
+          $addFields: {
+            iconUrl: {
+              $concat: [storage.getUrlParentDir(Folders.IconImage), "$icon"],
+            },
+          },
+        },
+      ]);
     });
   };
 }

@@ -96,7 +96,7 @@ exports.forgotPassword = async (req, res, next) => {
     });
   }
   try {
-    const user = await UserService.getUserByEmail(req.body.email);
+    const user = await UserService.getUserByEmail(req.body.email).execute();
     if (!user) {
       return res.json({
         status: ApiResponseCode.ResponseFail,
@@ -143,12 +143,7 @@ exports.validate = (method) => {
     case "forgotPassword": {
       return [check("email", "Invalid email").exists().isEmail()];
     }
-    case "forgotUpdatePassword": {
-      return [
-        check("email", "Invalid email").exists().isEmail(),
-        check("password", "Invalid password").exists().isLength({ min: 4 }),
-      ];
-    }
+
     default:
       return [];
   }
