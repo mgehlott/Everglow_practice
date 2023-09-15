@@ -52,6 +52,25 @@ class CampaignService {
     });
   };
 
+  static deleteCampaign = (id) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        console.log('campaign delete');
+        const deletedCampaign = await campaign.findByIdAndDelete(id);
+        console.log("campaign deleted", deletedCampaign);
+        if (deletedCampaign && deletedCampaign[TableFields.image].length > 0) {
+          const isImageDeleted = await storage.removeFile(
+            Folders.CampaignImage,
+            deletedCampaign[TableFields.image]
+          );
+          console.log("campaign image deleted", isImageDeleted);
+        }
+      } catch (error) {
+        throw error;
+      }
+    });
+  };
+
   static getCampaignById = (id) => {
     return new ProjectionBuilder(async function () {
       return await campaign.aggregate([
@@ -135,6 +154,47 @@ class CampaignService {
           },
         }
       );
+    });
+  };
+  static getAllCampaign = (req) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        const pipeline = [];
+        console.log(req.query);
+        const matchQuery = {};
+
+        if (req.query.searchTerm && req.query.searchTerm.length > 0) {
+          matchQuery[TableFields.title] = {
+            $regex: req.query.searchTerm,
+            $options: "i",
+          };
+        }
+        if (req.query.startDate && req.query.startDate.length > 0) {
+          matchQuery[TableFields.startDate] = {
+            $gte: new Date(req.query.startDate),
+          };
+        }
+        if (Object.keys(matchQuery).length > 0) {
+          pipeline.push({
+            $match: matchQuery,
+          });
+        }
+        pipeline.push({
+          $addFields: {
+            imageUrl: {
+              $concat: [
+                storage.getUrlParentDir(Folders.CampaignImage),
+                "$image",
+              ],
+            },
+          },
+        });
+
+        const results = await campaign.aggregate(pipeline);
+        return results;
+      } catch (error) {
+        throw error;
+      }
     });
   };
 }

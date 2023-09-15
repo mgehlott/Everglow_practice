@@ -5,22 +5,19 @@ const { ApiResponseCode } = require("../../utils/constants");
 const Utils = require("../../utils/utils");
 const req = require("express/lib/request");
 const CandleService = require("../../db/services/CandleService");
-const path = require('path');
-const fs = require('fs');
+const path = require("path");
+const fs = require("fs");
 
 exports.getAllOccasionType = async (req, res) => {
   try {
     const occasions = await OccasionService.getAllOccasion().execute();
-    res.json({
+    res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
-      result: {
-        data: occasions,
-        message: "Successful",
-      },
+      data: occasions,
     });
   } catch (error) {
     console.log(error);
-    res.json({
+    res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       result: {
         data: [],
@@ -32,14 +29,14 @@ exports.getAllOccasionType = async (req, res) => {
 
 exports.getAllNewsFeed = async (req, res, next) => {
   try {
-    const feeds = await NewsFeedService.getAllNewsFeed().execute();
+    const feeds = await NewsFeedService.getAllNewsFeed(req).execute();
     console.log(feeds);
-    res.json({
+    res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
-      results: feeds,
+      data: feeds,
     });
   } catch (error) {
-    res.json({
+    res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
     });
@@ -91,73 +88,148 @@ exports.getAboutUs = async (req, res) => {
   try {
     const filePath = path.join(
       __dirname,
-      '../../',
-      'storage',
-      'app',
-      'aboutUs.txt'
+      "../../",
+      "storage",
+      "app",
+      "aboutUs.txt"
     );
     let pageContent = "";
-    if (fs.existsSync(filePath))
-    {
-      pageContent = fs.readFileSync(filePath, 'utf-8');  
+    if (fs.existsSync(filePath)) {
+      pageContent = fs.readFileSync(filePath, "utf-8");
     }
     res.json({
       status: ApiResponseCode.ResponseSuccess,
-      result: pageContent
+      result: pageContent,
     });
   } catch (error) {
     res.json({
       status: ApiResponseCode.ResponseFail,
-      error: error.message
+      error: error.message,
     });
   }
 };
 exports.getTermsAndCondition = async (req, res) => {
-    try {
-      const filePath = path.join(
-        __dirname,
-        "../../",
-        "storage",
-        "app",
-        "termAndCondition.txt"
-      );
-      let pageContent = "";
-      if (fs.existsSync(filePath)) {
-        pageContent = fs.readFileSync(filePath, "utf-8");
-      }
-      res.json({
-        status: ApiResponseCode.ResponseSuccess,
-        result: pageContent,
-      });
-    } catch (error) {
-      res.json({
-        status: ApiResponseCode.ResponseFail,
-        error: error.message,
-      });
+  try {
+    const filePath = path.join(
+      __dirname,
+      "../../",
+      "storage",
+      "app",
+      "termAndCondition.txt"
+    );
+    let pageContent = "";
+    if (fs.existsSync(filePath)) {
+      pageContent = fs.readFileSync(filePath, "utf-8");
     }
-};
-exports.getPrivacyPolicy = async (req, res) => {  try {
-  const filePath = path.join(
-    __dirname,
-    "../../",
-    "storage",
-    "app",
-    "privacyPolicy.txt"
-  );
-  let pageContent = "";
-  if (fs.existsSync(filePath)) {
-    pageContent = fs.readFileSync(filePath, "utf-8");
+    res.json({
+      status: ApiResponseCode.ResponseSuccess,
+      result: pageContent,
+    });
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
   }
-  res.json({
-    status: ApiResponseCode.ResponseSuccess,
-    result: pageContent,
-  });
-} catch (error) {
-  res.json({
-    status: ApiResponseCode.ResponseFail,
-    error: error.message,
-  });
-}};
+};
+exports.getPrivacyPolicy = async (req, res) => {
+  try {
+    const filePath = path.join(
+      __dirname,
+      "../../",
+      "storage",
+      "app",
+      "privacyPolicy.txt"
+    );
+    let pageContent = "";
+    if (fs.existsSync(filePath)) {
+      pageContent = fs.readFileSync(filePath, "utf-8");
+    }
+    res.json({
+      status: ApiResponseCode.ResponseSuccess,
+      result: pageContent,
+    });
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
+exports.updateAboutUs = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractErrors = Utils.extractErrors(errors.array());
+    console.log(extractErrors);
+    return res.status(ApiResponseCode.ValidationMsg).json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractErrors,
+    });
+  }
+  try {
+    const filePath = path.join(
+      __dirname,
+      "../../",
+      "storage",
+      "app",
+      "aboutUs.txt"
+    );
+    fs.writeFile(filePath, req.body.data, (err) => {
+      if (!err) {
+        return res.json({
+          status: ApiResponseCode.ResponseSuccess,
+          result: "About us Updated",
+        });
+      }
+    });
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
+exports.updatePolicy = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractErrors = Utils.extractErrors(errors.array());
+    console.log(extractErrors);
+    return res.status(ApiResponseCode.ValidationMsg).json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractErrors,
+    });
+  }
+
+  try {
+    const filePath = path.join(
+      __dirname,
+      "../../",
+      "storage",
+      "app",
+      "privacyPolicy.txt"
+    );
+    fs.writeFile(filePath, req.body.data, (err) => {
+      if (!err) {
+        return res.json({
+          status: ApiResponseCode.ResponseSuccess,
+          result: "Policy updated.",
+        });
+      }
+    });
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
+exports.getAllCampaigns = async (req, res) => {
+  try {
+  } catch (error) {}
+};
 
 exports.validate = (method) => {
   switch (method) {
@@ -166,6 +238,12 @@ exports.validate = (method) => {
         check("email", "Invalid email").exists().isEmail(),
         check("message", "Invalid message").exists(),
       ];
+    }
+    case "updateAboutUs": {
+      return [check("data", "Invalid data").exists()];
+    }
+    case "updatePolicy": {
+      return [check("data", "Invalid data").exists()];
     }
     case "default":
       return [];

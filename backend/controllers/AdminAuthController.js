@@ -9,9 +9,9 @@ exports.login = async (req, res, next) => {
   if (!errors.isEmpty()) {
     const extractedErrors = Utils.extractErrors(errors.array());
     console.log(extractedErrors);
-    return res.json({
+    return res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
-      errors: extractedErrors,
+      error: extractedErrors[0],
     });
   }
   try {
@@ -23,32 +23,28 @@ exports.login = async (req, res, next) => {
       delete tempUser[TableFields.password];
       if (isValidPassword) {
         const token = user.createAuthToken();
-        res.json({
+        res.status(ApiResponseCode.ResponseSuccess).json({
           status: ApiResponseCode.ResponseSuccess,
-          result: {
-            user: tempUser,
-            token: token,
-          },
+          user: tempUser,
+          token: token,
         });
       } else {
-        res.json({
+        res.status(ApiResponseCode.ResponseFail).json({
           status: ApiResponseCode.ResponseFail,
-          result: {
-            message: "Invalid password",
-          },
+          error: "Invalid password",
         });
       }
     } else {
-      res.json({
+      res.status(ApiResponseCode.ResponseFail).json({
         status: ApiResponseCode.ResponseFail,
-        errors: "Invalid email",
+        error: "Invalid email",
       });
     }
   } catch (error) {
     console.log(errors);
     res.json({
       status: ApiResponseCode.ResponseFail,
-      errors: error.message,
+      error: error.message,
     });
   }
 };

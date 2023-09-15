@@ -5,6 +5,7 @@ const ApiAuthMiddleware = require("../middlewares/apiAuth");
 const AuthMiddleware = require("../middlewares/auth");
 const CampaignController = require("../controllers/Api/CampaignController");
 const UserAuthController = require("../controllers/Api/UserAuthController");
+const ApiController = require("../controllers/Api/ApiController");
 
 const router = function (app) {
   //-------------Authentication--------------------
@@ -23,6 +24,11 @@ const router = function (app) {
     AdminController.addNewsFeed
   );
 
+  app.delete(
+    "/admin/deleteNewsFeed/:newsFeedId",
+    AuthMiddleware.adminAuth,
+    AdminController.deleteNewsFeed
+  );
   //------------- Comments----------
   app.post(
     "/admin/deleteComment/:commentId",
@@ -45,11 +51,29 @@ const router = function (app) {
     AdminController.deleteCandle
   );
 
+  //--------campaigns -----------
+  app.get(
+    "/admin/campaigns",
+    AuthMiddleware.adminAuth,
+    CampaignController.getAllCampaigns
+  );
+  app.delete(
+    "/admin/deleteCampaign/:campaignId",
+    AuthMiddleware.adminAuth,
+    AdminController.deleteCampaign
+  );
+
   app.post(
     "/admin/updateCandle/:candleId",
     AuthMiddleware.adminAuth,
     ImageHandler.uploadSingle("icon"),
     AdminController.updateCandle
+  );
+  //-------------users-------------
+  app.get(
+    "/admin/users",
+    AuthMiddleware.adminAuth,
+    AdminController.getAllUsers
   );
 
   //---------occasion -----------
@@ -59,6 +83,12 @@ const router = function (app) {
     ImageHandler.uploadSingle("icon"),
     AdminController.validate("addOccasion"),
     AdminController.addOccasion
+  );
+
+  app.get(
+    "/admin/getAllOccasion",
+    AuthMiddleware.adminAuth,
+    ApiController.getAllOccasionType
   );
 
   // --------- password ----------
@@ -82,8 +112,24 @@ const router = function (app) {
   );
   app.post(
     "admin/forgotUpdatePassword",
-    UserAuthController.validate('forgetAndUpdatePassword'),
+    UserAuthController.validate("forgetAndUpdatePassword"),
     UserAuthController.forgetAndUpdatePassword
+  );
+
+  //---------- other -------------
+
+  app.put(
+    "/admin/updateAboutUs",
+    AuthMiddleware.adminAuth,
+    ApiController.validate("updateAboutUs"),
+    ApiController.updateAboutUs
+  );
+
+  app.put(
+    "/admin/updatePrivacyPolicy",
+    AuthMiddleware.adminAuth,
+    ApiController.validate("updatePolicy"),
+    ApiController.updatePolicy
   );
 };
 

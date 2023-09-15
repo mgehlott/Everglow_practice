@@ -111,6 +111,21 @@ exports.deleteComment = async (req, res) => {
   }
 };
 
+exports.getAllCampaigns = async (req, res) => {
+  try {
+    const campaigns = await CampaignService.getAllCampaign(req).execute();
+    res.status(ApiResponseCode.ResponseSuccess).json({
+      status: ApiResponseCode.ResponseSuccess,
+      data: campaigns,
+    });
+  } catch (error) {
+    res.status(ApiResponseCode.ResponseFail).json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
 exports.validate = (method) => {
   switch (method) {
     case "createCampaign": {

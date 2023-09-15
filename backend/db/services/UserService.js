@@ -21,6 +21,42 @@ class UserService {
     });
   };
 
+  static getAllUser = (req) => {
+    return new ProjectionBuilder(async function () {
+      const page = req.query.page;
+      const limit = +req.query.limit;
+      console.log("page limit", page, limit);
+      const pageOption = {};
+      if (page && limit) {
+        const skip = (page - 1) * limit;
+        pageOption.skip = skip;
+        pageOption.limit = limit;
+      }
+      //  console.log(this);
+
+      try {
+        return await user.find(
+          { [TableFields.userType]: { $nin: [UserTypes.Admin] } },
+          this,
+          pageOption
+        );
+        // const users = await user
+        //   .aggregate()
+        //   .match({ [TableFields.userType]: { $nin: [UserTypes.Admin] } })
+        //   .project(this)
+        //   .addFields({
+        //     name: { $concat: ["$firstName", " ", "$lastName"] },
+        //   })
+        //   .skip(skip)
+        //   .limit(limit);
+        console.log(users);
+        return users;
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    });
+  };
+
   static createUser = (req) => {
     return new ProjectionBuilder(async function () {
       try {
@@ -111,6 +147,37 @@ class UserService {
       }
     });
   };
+  static updateUser = (req) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        const email = req.body.email;
+        let isExist;
+        if (email != req.user[TableFields.email]) {
+          isExist = await UserService.getUserByEmail(email).execute();
+        }
+        if (isExist) {
+          throw new Error("Email already exists");
+        }
+        return await user.findByIdAndUpdate(
+          req.user[TableFields.ID],
+          {
+            $set: req.body,
+          },
+          { new: true }
+        );
+      } catch (error) {
+        throw error;
+      }
+    });
+  };
+
+  static getUserCount = () => {
+    return new ProjectionBuilder(async function () {
+      return await user
+        .find({ [TableFields.userType]: { $nin: [UserTypes.Admin] } })
+        .count();
+    });
+  };
 }
 
 class ProjectionBuilder {
@@ -141,6 +208,10 @@ class ProjectionBuilder {
     };
     this.withVerificationCode = () => {
       projection[TableFields.verificationCode] = 1;
+      return this;
+    };
+    this.withCreationDate = () => {
+      projection[TableFields.createdAt] = 1;
       return this;
     };
 

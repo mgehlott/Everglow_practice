@@ -29,23 +29,57 @@ class NewsFeedService {
       }
     });
   };
-  static getAllNewsFeed = () => {
+  static getAllNewsFeed = (req) => {
     return new ProjectionBuilder(async function () {
       try {
-        const feeds = await newsfeed.aggregate([
-          {
-            $addFields: {
-              imageUrl: {
-                $concat: [
-                  storage.getUrlParentDir(Folders.NewsFeedImage),
-                  "$image",
-                ],
+        const pipeline = [];
+        console.log("feed query", req.query);
+        if (req.query.searchTerm && req.query.searchTerm.length > 0) {
+          const matchStage = {
+            $match: {
+              [TableFields.title]: {
+                $regex: req.query.searchTerm,
+                $options: "i",
               },
             },
+          };
+          pipeline.push(matchStage);
+        }
+
+        pipeline.push({
+          $addFields: {
+            imageUrl: {
+              $concat: [
+                storage.getUrlParentDir(Folders.NewsFeedImage),
+                "$image",
+              ],
+            },
           },
-        ]);
+        });
+
+        const feeds = await newsfeed.aggregate(pipeline);
         return feeds;
       } catch (error) {
+        throw error;
+      }
+    });
+  };
+
+  static deleteNewsFeed = (params) => {
+    return new ProjectionBuilder(async function () {
+      try {
+        const feed = await newsfeed.findByIdAndDelete(params);
+        console.log("feed deleted", feed);
+        if (feed && feed[TableFields.image].length > 0) {
+          const deletedImage = await storage.removeFile(
+            Folders.NewsFeedImage,
+            feed[TableFields.image]
+          );
+          console.log("image deleted", deletedImage);
+        }
+        return feed;
+      } catch (error) {
+        console.log(error);
         throw error;
       }
     });

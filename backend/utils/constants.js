@@ -68,7 +68,7 @@ const ValidationMsg = {
 };
 
 const ApiResponseCode = {
-  ResponseFail: 0,
+  ResponseFail: 400,
   ClientOrServerError: 400,
   ResponseSuccess: 200,
   AuthError: 401,

@@ -33,7 +33,7 @@ exports.extractErrors = (errors) => {
       lastPath = Object.keys(extractErrors[extractErrors.length - 1])[0];
     }
 
-    if (lastPath !== err.path) extractErrors.push({ [err.path]: err.msg });
+    if (lastPath !== err.path) extractErrors.push(err.msg);
   });
   return extractErrors;
 };

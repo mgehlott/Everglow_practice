@@ -1,0 +1,90 @@
+const campaign = {
+  creator: {
+    name: "mahendra gehlot",
+    email: "mahendragehlot006@gmail.com",
+    userId: "64f6e1adf7314f158d0b6392",
+  },
+  occasionType: {
+    title: "Friendship",
+    color: "#fff",
+    icon: "ficon",
+  },
+  candleType: {
+    title: "Classic candle",
+    icon: "cicon",
+  },
+  visibility: 1,
+  title: "Celebrate exam result",
+  image: "image.png",
+  description: "description",
+  isCommentAllow: true,
+  startDate: "2023/05/01",
+  duration: 30,
+  link: "https://google.com",
+};
+
+const users = [
+  {
+    firstName: "Rohit",
+    lastName: "Sharma",
+    email: "rs@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "Virat",
+    lastName: "Kohli",
+    email: "vk@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "test",
+    lastName: "test",
+    email: "test@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "Rahul",
+    lastName: "kumar",
+    email: "rk@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "Ravi",
+    lastName: "Singh",
+    email: "rvs@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "Shivam",
+    lastName: "Sharma",
+    email: "ss@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "Mohit",
+    lastName: "Sharma",
+    email: "ms@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "mark",
+    lastName: "wood",
+    email: "mw@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+  {
+    firstName: "joe",
+    lastName: "root",
+    email: "jr@gmail.com",
+    password: "$2b$08$pM/3v0e0fi6TKA8fu5KkNuqf0IzwyKWFJJPocxU2c0ebsHuGGFhui",
+    userType: [2],
+  },
+];

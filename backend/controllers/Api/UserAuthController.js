@@ -240,6 +240,31 @@ exports.forgetAndUpdatePassword = async (req, res) => {
   }
 };
 
+exports.updateProfile = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const extractedErrors = Utils.extractErrors(errors.array());
+    console.log(extractedErrors);
+    return res.json({
+      status: ApiResponseCode.ValidationMsg,
+      errors: extractedErrors,
+    });
+  }
+
+  try {
+    const updatedUser = await UserService.updateUser(req).execute();
+    res.json({
+      status: ApiResponseCode.ResponseSuccess,
+      result: updatedUser,
+    });
+  } catch (error) {
+    res.json({
+      status: ApiResponseCode.ResponseFail,
+      error: error.message,
+    });
+  }
+};
+
 exports.validate = (method) => {
   switch (method) {
     case "userRegister": {
@@ -281,6 +306,13 @@ exports.validate = (method) => {
       return [
         check("email", "Please enter email").exists().isEmail(),
         check("password", "Invalid password").exists().isLength({ min: 4 }),
+      ];
+    }
+    case "updateProfile": {
+      return [
+        check("email", "Please enter email").exists().isEmail(),
+        check("firstName", "Invalid first name").exists(),
+        check("lastName", "Invalid last name").exists(),
       ];
     }
 

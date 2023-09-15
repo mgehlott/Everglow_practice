@@ -24,6 +24,13 @@ const router = function (app) {
     UserAuthController.confirmCode
   );
 
+  app.put(
+    "/api/updateProfile",
+    ApiAuthMiddleware.auth,
+    UserAuthController.validate("updateProfile"),
+    UserAuthController.updateProfile
+  );
+
   // ----------- occasion ----------
 
   app.get(
