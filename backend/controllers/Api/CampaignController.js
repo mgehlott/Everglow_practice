@@ -65,13 +65,46 @@ exports.addComment = async (req, res) => {
   try {
     const updatedCampaign = await CampaignService.addComment(req).execute();
     console.log(updatedCampaign);
-    res.json({
+    res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
       result: updatedCampaign,
+      message: "Comment Added",
+      error: "",
     });
   } catch (error) {
-    res.json({
+    res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
+      error: error.message,
+      result: [],
+      message: "Comment add failed",
+    });
+  }
+};
+
+exports.getAllComments = async (req, res) => {
+  try {
+    const comment = await CampaignService.getAllComments(req)
+      .withComments()
+      .execute();
+    console.log("comments", comment);
+    const results = [];
+    comment.forEach((element) => {
+      results.push(...element.comments);
+    });
+    console.log("result", results);
+    const total = results.length;
+    return res.status(ApiResponseCode.ResponseSuccess).json({
+      status: ApiResponseCode.ResponseSuccess,
+      result: results,
+      total: total,
+      message: "Successful",
+      error: "",
+    });
+  } catch (error) {
+    res.status(ApiResponseCode.ResponseFail).json({
+      status: ApiResponseCode.ResponseFail,
+      result: [],
+      message: "Comment fetching failed",
       error: error.message,
     });
   }
@@ -92,21 +125,48 @@ exports.deleteComment = async (req, res) => {
     const update = await CampaignService.deleteComment(req).execute();
     console.log("deleted", update);
     if (update) {
-      res.json({
+      res.status(ApiResponseCode.ResponseSuccess).json({
         status: ApiResponseCode.ResponseSuccess,
-        result: "deleted",
+        result: [],
+        message: "comment deleted",
+        error: "",
       });
     } else {
-      res.json({
+      res.status(ApiResponseCode.ResponseFail).json({
         status: ApiResponseCode.ResponseFail,
         error: "something went wrong",
+        result: [],
+        message: "Comment deletion failed",
       });
     }
   } catch (error) {
     console.log(error);
-    res.json({
+    res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
+      result: [],
+      message: "Something went wrong",
+    });
+  }
+};
+exports.allCampaignName = async (req, res, next) => {
+  try {
+    const campaigns = await CampaignService.getAllCampaign(req)
+      .withID()
+      .withTitle()
+      .execute();
+    res.status(ApiResponseCode.ResponseSuccess).json({
+      status: ApiResponseCode.ResponseSuccess,
+      result: campaigns,
+      error: "",
+      message: "Campaign Fetch Successful",
+    });
+  } catch (error) {
+    res.status(ApiResponseCode.ResponseFail).json({
+      status: ApiResponseCode.ResponseFail,
+      result: [],
+      error: error.message,
+      message: "Campaign Fetch Failed",
     });
   }
 };
@@ -114,14 +174,20 @@ exports.deleteComment = async (req, res) => {
 exports.getAllCampaigns = async (req, res) => {
   try {
     const campaigns = await CampaignService.getAllCampaign(req).execute();
+    const total = await (await CampaignService.getCampaignsCount()).execute();
     res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
       data: campaigns,
+      total: total,
+      message: "Campaigns fetched !!",
+      error: "",
     });
   } catch (error) {
     res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
+      result: [],
+      message: "Campaigns fetch failed",
     });
   }
 };

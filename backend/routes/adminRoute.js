@@ -29,12 +29,29 @@ const router = function (app) {
     AuthMiddleware.adminAuth,
     AdminController.deleteNewsFeed
   );
+  app.patch(
+    "/admin/updateNewsFeed/:newsFeedId",
+    AuthMiddleware.adminAuth,
+    ImageHandler.uploadSingle("image"),
+    AdminController.updateNewsFeed
+  );
   //------------- Comments----------
-  app.post(
+  app.delete(
     "/admin/deleteComment/:commentId",
     AuthMiddleware.adminAuth,
     CampaignController.validate("deleteComment"),
     CampaignController.deleteComment
+  );
+
+  app.get(
+    "/admin/comments",
+    AuthMiddleware.adminAuth,
+    CampaignController.getAllComments
+  );
+  app.get(
+    "/admin/campaignName",
+    AuthMiddleware.adminAuth,
+    CampaignController.allCampaignName
   );
 
   //----------- candles ----------
@@ -76,6 +93,17 @@ const router = function (app) {
     AdminController.getAllUsers
   );
 
+  app.patch(
+    "/admin/deactivateUser/:userId",
+    AuthMiddleware.adminAuth,
+    AdminController.deactivateUser
+  );
+  app.patch(
+    "/admin/deleteUser/:userId",
+    AuthMiddleware.adminAuth,
+    AdminController.deleteUser
+  );
+
   //---------occasion -----------
   app.post(
     "/admin/addOccasion",
@@ -89,6 +117,24 @@ const router = function (app) {
     "/admin/getAllOccasion",
     AuthMiddleware.adminAuth,
     ApiController.getAllOccasionType
+  );
+
+  app.patch(
+    "/admin/updateOccasion/:occasionId",
+    AuthMiddleware.adminAuth,
+    ImageHandler.uploadSingle("icon"),
+    AdminController.updateOccasion
+  );
+  // -------------- messages ---------
+  app.get(
+    "/admin/getMessages",
+    AuthMiddleware.adminAuth,
+    AdminController.getAllMessages
+  );
+  app.delete(
+    "/admin/deleteMessage/:messageId",
+    AuthMiddleware.adminAuth,
+    AdminController.deleteMessage
   );
 
   // --------- password ----------
@@ -118,18 +164,18 @@ const router = function (app) {
 
   //---------- other -------------
 
-  app.put(
+  app.post(
     "/admin/updateAboutUs",
     AuthMiddleware.adminAuth,
-    ApiController.validate("updateAboutUs"),
-    ApiController.updateAboutUs
+    AdminController.validate("updateAboutUs"),
+    AdminController.updateAboutUs
   );
 
-  app.put(
+  app.post(
     "/admin/updatePrivacyPolicy",
     AuthMiddleware.adminAuth,
-    ApiController.validate("updatePolicy"),
-    ApiController.updatePolicy
+    AdminController.validate("updatePolicy"),
+    AdminController.updatePolicy
   );
 };
 

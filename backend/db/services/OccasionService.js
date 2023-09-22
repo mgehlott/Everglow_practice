@@ -4,17 +4,23 @@ const storage = require("../../utils/storage");
 const { Folders } = require("../../utils/metadata");
 
 class OccasionService {
-  static getAllOccasion = () => {
+  static getAllOccasion = (req) => {
     return new ProjectionBuilder(async function () {
-      return await occasion.aggregate([
-        {
-          $addFields: {
-            iconUrl: {
-              $concat: [storage.getUrlParentDir(Folders.IconImage), "$icon"],
-            },
+      const pipeline = [];
+      pipeline.push({
+        $addFields: {
+          iconUrl: {
+            $concat: [storage.getUrlParentDir(Folders.IconImage), "$icon"],
           },
         },
-      ]);
+      });
+      const page = +req.query.page;
+      const limit = +req.query.limit;
+      if (page && limit) {
+        const skip = (page - 1) * limit;
+        pipeline.push({ $skip: skip }, { $limit: limit });
+      }
+      return await occasion.aggregate(pipeline);
     });
   };
   static addOccasion = (req) => {
@@ -36,6 +42,47 @@ class OccasionService {
       } catch (error) {
         throw error;
       }
+    });
+  };
+  static updateOccasion = (req) => {
+    return new ProjectionBuilder(async function () {
+      const currOccasion = await occasion.findById(req.params.occasionId);
+      if (!currOccasion) throw new Error("Invalid Occasion Id");
+      if (req.body.title) {
+        currOccasion[TableFields.title] = req.body.title;
+      }
+      if (req.body.color) {
+        currOccasion[TableFields.color] = req.body.color;
+      }
+      console.log("file up occasion", req.file, req.body);
+      if (req.file) {
+        if (currOccasion[TableFields.icon].length > 0) {
+          const isIconDeleted = storage.removeFile(
+            Folders.IconImage,
+            currOccasion[TableFields.icon]
+          );
+          console.log("occasion icon removed", isIconDeleted);
+        }
+        const filename = await storage.addFile(
+          Folders.IconImage,
+          req.file.originalname,
+          req.file.buffer
+        );
+        console.log("update candle icon added", filename);
+        currOccasion[TableFields.icon] = filename;
+      }
+      console.log("upadate", currOccasion);
+      return await currOccasion.save();
+    });
+  };
+  static getOccasionById = (id) => {
+    return new ProjectionBuilder(async function () {
+      return await occasion.findById(id);
+    });
+  };
+  static getOccasionsCount = () => {
+    return new ProjectionBuilder(async function () {
+      return await occasion.find({}).count();
     });
   };
 }

@@ -3,26 +3,30 @@ const NewsFeedService = require("../../db/services/NewsFeedService");
 const OccasionService = require("../../db/services/OccasionService");
 const { ApiResponseCode } = require("../../utils/constants");
 const Utils = require("../../utils/utils");
-const req = require("express/lib/request");
+
 const CandleService = require("../../db/services/CandleService");
 const path = require("path");
 const fs = require("fs");
+const MessageService = require("../../db/services/MessageService");
 
 exports.getAllOccasionType = async (req, res) => {
   try {
-    const occasions = await OccasionService.getAllOccasion().execute();
+    const occasions = await OccasionService.getAllOccasion(req).execute();
+    const total = await OccasionService.getOccasionsCount().execute();
     res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
       data: occasions,
+      message: "Occasion fetched successful",
+      total: total,
+      error: "",
     });
   } catch (error) {
     console.log(error);
     res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
-      result: {
-        data: [],
-        message: error.message,
-      },
+      error: error.message,
+      message: "Occasion fetch failed",
+      result: [],
     });
   }
 };
@@ -30,22 +34,29 @@ exports.getAllOccasionType = async (req, res) => {
 exports.getAllNewsFeed = async (req, res, next) => {
   try {
     const feeds = await NewsFeedService.getAllNewsFeed(req).execute();
+    const total = await NewsFeedService.getNewsFeedCount().execute();
     console.log(feeds);
-    res.status(ApiResponseCode.ResponseSuccess).json({
-      status: ApiResponseCode.ResponseSuccess,
-      data: feeds,
-    });
+    res
+      .status(ApiResponseCode.ResponseSuccess)
+      .json({
+        status: ApiResponseCode.ResponseSuccess,
+        data: feeds,
+        error: "",
+        total: total,
+      });
   } catch (error) {
     res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
+      result: [],
+      message: "Newsfeed fetch failed",
     });
   }
 };
 
 exports.getAllCandleType = async (req, res) => {
   try {
-    const candles = await CandleService.getAllCandles().execute();
+    const candles = await CandleService.getAllCandles(req).execute();
     res.json({
       status: ApiResponseCode.ResponseSuccess,
       result: {
@@ -67,19 +78,26 @@ exports.getAllCandleType = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
   try {
-    Utils.sendMail({
-      to: "admin@gmail.com",
-      subject: "New Message",
-      text: req.body.message,
-    });
-    res.json({
-      status: ApiResponseCode.ResponseSuccess,
-      result: "Message sent !!",
-    });
+    const result = await MessageService.saveMessage(req).execute();
+    if (result) {
+      Utils.sendMail({
+        to: "admin@gmail.com",
+        subject: "New Message",
+        text: req.body.message,
+      });
+      res.status(ApiResponseCode.ResponseSuccess).json({
+        status: ApiResponseCode.ResponseSuccess,
+        message: "Message sent !!",
+        result: result,
+        error: "",
+      });
+    }
   } catch (error) {
-    res.json({
+    res.status(ApiResponseCode.ResponseFail).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
+      message: "Message sending fails",
+      result: [],
     });
   }
 };
@@ -97,14 +115,16 @@ exports.getAboutUs = async (req, res) => {
     if (fs.existsSync(filePath)) {
       pageContent = fs.readFileSync(filePath, "utf-8");
     }
-    res.json({
+    res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseSuccess,
       result: pageContent,
+      error: "",
     });
   } catch (error) {
-    res.json({
+    res.status(ApiResponseCode.ResponseSuccess).json({
       status: ApiResponseCode.ResponseFail,
       error: error.message,
+      result: "",
     });
   }
 };
@@ -224,11 +244,6 @@ exports.updatePolicy = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-exports.getAllCampaigns = async (req, res) => {
-  try {
-  } catch (error) {}
 };
 
 exports.validate = (method) => {

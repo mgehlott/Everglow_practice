@@ -38,6 +38,10 @@ const userSchema = mongoose.Schema(
         },
       ],
     },
+    [TableFields.isDeleted]: {
+      type: Number,
+      default: 0,
+    },
     [TableFields.verificationCode]: {
       type: Number,
     },
@@ -50,6 +54,10 @@ const userSchema = mongoose.Schema(
       type: Date,
       trim: true,
       default: "",
+    },
+    [TableFields.isActive]: {
+      type: Boolean,
+      default: true,
     },
   },
   {

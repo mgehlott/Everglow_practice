@@ -56,12 +56,51 @@ class NewsFeedService {
             },
           },
         });
-
+        
+        const page = +req.query.page;
+        const limit = +req.query.limit;
+        console.log("query", req.query, limit);
+        if (page && limit) {
+          const skip = (page - 1) * limit;
+          pipeline.push({ $skip: skip }, { $limit: limit });
+        }
+        console.log("newsfeed", pipeline);
         const feeds = await newsfeed.aggregate(pipeline);
         return feeds;
       } catch (error) {
         throw error;
       }
+    });
+  };
+
+  static updateNewsFeed = (req) => {
+    return new ProjectionBuilder(async function () {
+      const currFeed = await newsfeed.findById(req.params.newsFeedId);
+      if (!currFeed) throw new Error("Invalid Newfeed Id");
+      if (req.body.title) {
+        currFeed[TableFields.title] = req.body.title;
+      }
+      if (req.body.description) {
+        currFeed[TableFields.description] = req.body.description;
+      }
+      if (req.file) {
+        if (currFeed[TableFields.image].length > 0) {
+          const deleteImage = storage.removeFile(
+            Folders.NewsFeedImage,
+            currFeed[TableFields.image]
+          );
+          console.log("newsfeed image delete", deleteImage);
+        }
+        const filename = await storage.addFile(
+          Folders.NewsFeedImage,
+          req.file.originalname,
+          req.file.buffer
+        );
+        console.log("image added to newsfeed", filename);
+        currFeed[TableFields.image] = filename;
+      }
+      console.log("updated feed", currFeed);
+      return await currFeed.save();
     });
   };
 
@@ -82,6 +121,12 @@ class NewsFeedService {
         console.log(error);
         throw error;
       }
+    });
+  };
+
+  static getNewsFeedCount = () => {
+    return new ProjectionBuilder(async function () {
+      return await newsfeed.find({}).count();
     });
   };
 }
@@ -107,7 +152,6 @@ class ProjectionBuilder {
       return this;
     };
     this.execute = async () => {
-      console.log("excuted");
       if (Object.keys(projection.populate) == 0) {
         delete projection.populate;
       } else {

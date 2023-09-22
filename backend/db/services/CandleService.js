@@ -2,6 +2,7 @@ const { TableFields, ApiResponseCode } = require("../../utils/constants");
 const candle = require("../models/candle");
 const storage = require("../../utils/storage");
 const { Folders } = require("../../utils/metadata");
+const req = require("express/lib/request");
 class CandleService {
   static addCandle = (req) => {
     return new ProjectionBuilder(async function () {
@@ -75,17 +76,28 @@ class CandleService {
     });
   };
 
-  static getAllCandles = () => {
+  static getAllCandles = (req) => {
     return new ProjectionBuilder(async function () {
-      return await candle.aggregate([
-        {
-          $addFields: {
-            iconUrl: {
-              $concat: [storage.getUrlParentDir(Folders.IconImage), "$icon"],
-            },
+      const pipeline = [];
+      pipeline.push({
+        $addFields: {
+          iconUrl: {
+            $concat: [storage.getUrlParentDir(Folders.IconImage), "$icon"],
           },
         },
-      ]);
+      });
+      const page = +req.query.page;
+      const limit = +req.query.limit;
+      if (page && limit) {
+        const skip = (page - 1) * limit;
+        pipeline.push({ $skip: skip }, { $limit: limit });
+      }
+      return await candle.aggregate(pipeline);
+    });
+  };
+  static getCandlesCount = async () => {
+    return new ProjectionBuilder(async function () {
+      return await candle.find({}).count();
     });
   };
 }

@@ -32,11 +32,16 @@ class UserService {
         pageOption.skip = skip;
         pageOption.limit = limit;
       }
-      //  console.log(this);
-
+      console.log("page option", pageOption);
       try {
         return await user.find(
-          { [TableFields.userType]: { $nin: [UserTypes.Admin] } },
+          {
+            [TableFields.userType]: { $nin: [UserTypes.Admin] },
+            [TableFields.firstName]: {
+              $regex: req.query.searchTerm,
+              $options: "i",
+            },
+          },
           this,
           pageOption
         );
@@ -49,11 +54,22 @@ class UserService {
         //   })
         //   .skip(skip)
         //   .limit(limit);
-        console.log(users);
-        return users;
+        // console.log(users);
+        // return users;
       } catch (error) {
         throw new Error(error.message);
       }
+    });
+  };
+
+  static deactivateUser = (req) => {
+    return new ProjectionBuilder(async function () {
+      const currUser = await user.findById(req.params.userId);
+      if (!currUser) throw new Error("Invalid User id");
+
+      console.log(currUser);
+      currUser[TableFields.isActive] = !currUser[TableFields.isActive];
+      return await currUser.save();
     });
   };
 
@@ -81,6 +97,23 @@ class UserService {
       } catch (error) {
         throw error;
       }
+    });
+  };
+  static deleteUserById = (req) => {
+    return new ProjectionBuilder(async function () {
+      console.log(await user.findById(req.params.userId));
+      return await user
+        .findByIdAndUpdate(
+          req.params.userId,
+          {
+            $set: {
+              [TableFields.isDeleted]: 1,
+            },
+          },
+
+          { new: true }
+        )
+        .select("-password");
     });
   };
   static confirmCode = (email, code) => {
@@ -192,6 +225,7 @@ class ProjectionBuilder {
     this.withBasicInfo = () => {
       projection[TableFields.firstName] = 1;
       projection[TableFields.lastName] = 1;
+      projection[TableFields.isActive] = 1;
       return this;
     };
     this.withUserType = () => {

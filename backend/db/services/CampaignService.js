@@ -4,6 +4,8 @@ const Utils = require("../../utils/utils");
 const storage = require("../../utils/storage");
 const { Folders } = require("../../utils/metadata");
 const CandleService = require("./CandleService");
+const OccasionService = require("./OccasionService");
+const mongoose = require("mongoose");
 
 class CampaignService {
   static createCampaign = (req) => {
@@ -33,6 +35,7 @@ class CampaignService {
         req.body[TableFields.isCommentAllow];
       newCampaign[TableFields.startDate] = date;
       newCampaign[TableFields.duration] = req.body[TableFields.duration];
+      console.log("campagin", newCampaign);
       if (newCampaign) {
         try {
           const filename = await storage.addFile(
@@ -55,7 +58,7 @@ class CampaignService {
   static deleteCampaign = (id) => {
     return new ProjectionBuilder(async function () {
       try {
-        console.log('campaign delete');
+        console.log("campaign delete");
         const deletedCampaign = await campaign.findByIdAndDelete(id);
         console.log("campaign deleted", deletedCampaign);
         if (deletedCampaign && deletedCampaign[TableFields.image].length > 0) {
@@ -89,6 +92,7 @@ class CampaignService {
   };
   static addComment = (req) => {
     return new ProjectionBuilder(async function () {
+      console.log(req.params.campaignId);
       const data = {
         [TableFields.name]: req.body.name,
         [TableFields.description]: req.body.description,
@@ -109,8 +113,40 @@ class CampaignService {
     });
   };
 
+  static getAllComments = (req) => {
+    return new ProjectionBuilder(async function () {
+      const pipeline = [];
+      pipeline.push({
+        $addFields: {
+          "comments.campaign": "$title",
+          "comments.campaignId": "$_id",
+        },
+      });
+      if (req.query.campaign) {
+        pipeline.push({
+          $match: {
+            _id: new mongoose.Types.ObjectId(req.query.campaign),
+          },
+        });
+      }
+      console.log(pipeline);
+      if (req.query.campaign) {
+        console.log(await campaign.find({ _id: req.query.campaign }));
+      }
+      return await campaign.aggregate(pipeline).project(this);
+    });
+  };
+
+  static getCommentsCount = async (req) => {
+    // const campaigns = await campaign.findById(
+    //   new mongoose.Types.ObjectId(req.query.campaignId)
+    // );
+    // return await campaign[TableFields.comments].count();
+  };
+
   static deleteComment = (req) => {
     return new ProjectionBuilder(async function () {
+      console.log(req.body.campaignId, req.params.commentId);
       const campaignId = req.body.campaignId;
       const commentId = req.params.commentId;
       console.log(campaignId, commentId);
@@ -141,6 +177,12 @@ class CampaignService {
       const fetchedCandle = await CandleService.getCandleById(
         req.params.candleId
       );
+      console.log(
+        "campaing candle",
+        await campaign.find({
+          "candleType.candleId": req.params.candleId,
+        })
+      );
       return await campaign.updateMany(
         {
           "candleType.candleId": req.params.candleId,
@@ -151,6 +193,36 @@ class CampaignService {
               [TableFields.title]: req.body.title,
               [TableFields.icon]: fetchedCandle[TableFields.icon],
             },
+          },
+        }
+      );
+    });
+  };
+  static updateOccasions = (req) => {
+    return new ProjectionBuilder(async function () {
+      const fetchedOccasion = await OccasionService.getOccasionById(
+        req.params.occasionId
+      ).execute();
+      console.log(
+        "log",
+        await campaign.find({
+          "occasionType.occasionId": req.params.occasionId,
+        })
+      );
+      console.log("fetched occasion", fetchedOccasion);
+      const updateDoc = {
+        [TableFields.title]: fetchedOccasion[TableFields.title],
+        [TableFields.icon]: fetchedOccasion[TableFields.icon],
+        [TableFields.occasionId]: fetchedOccasion[TableFields.ID],
+      };
+
+      return await campaign.updateMany(
+        {
+          "occasionType.occasionId": req.params.occasionId,
+        },
+        {
+          $set: {
+            [TableFields.occasionType]: updateDoc,
           },
         }
       );
@@ -189,12 +261,23 @@ class CampaignService {
             },
           },
         });
-
+        const page = +req.query.page;
+        const limit = +req.query.limit;
+        if (page && limit) {
+          const skip = (page - 1) * limit;
+          pipeline.push({ $skip: skip }, { $limit: limit });
+        }
         const results = await campaign.aggregate(pipeline);
         return results;
       } catch (error) {
         throw error;
       }
+    });
+  };
+
+  static getCampaignsCount = async () => {
+    return new ProjectionBuilder(async function () {
+      return await campaign.find({}).count();
     });
   };
 }
@@ -223,6 +306,10 @@ class ProjectionBuilder {
       projection[TableFields.image] = 1;
       projection[TableFields.isCommentAllow] = 1;
       projection[TableFields.visibility] = 1;
+      return this;
+    };
+    this.withTitle = () => {
+      projection[TableFields.title] = 1;
       return this;
     };
     this.withDateAndDuration = () => {
