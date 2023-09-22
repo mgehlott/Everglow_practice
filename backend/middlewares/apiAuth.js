@@ -12,9 +12,24 @@ exports.auth = async (req, res, next) => {
       decoded[TableFields.ID]
     ).execute();
     console.log("auth user", user);
-    if (user) {
+
+    if (user && user[TableFields.isActive] === true) {
+      user.name =
+        user[TableFields.firstName] + " " + user[TableFields.lastName];
       req.user = user;
       next();
+    } else if (user && user[TableFields.isDeleted] === 1) {
+      return res.status(ApiResponseCode.AccountDeleted).json({
+        status: ApiResponseCode.AccountDeleted,
+        message: "Account is Deleted ,Contact Admin",
+        error: "",
+      });
+    } else if (user[TableFields.isActive] === false) {
+      return res.status(ApiResponseCode.AccountDeleted).json({
+        status: ApiResponseCode.AccountDeleted,
+        message: "Account Deactivated ,Contact Admin",
+        error: "",
+      });
     } else {
       return res.json({
         status: ApiResponseCode.AuthError,

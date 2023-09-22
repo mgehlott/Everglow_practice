@@ -31,6 +31,9 @@ const TableFields = {
   candleId: "candleId",
   createdAt: "createdAt",
   updatedAt: "updatedAt",
+  message: "message",
+  isActive: "isActive",
+  isDeleted:'isDeleted'
   //commentDescription: "commentDescription",
   //newFeedTitle: "newFeedTitle",
 };
@@ -41,6 +44,7 @@ const TableNames = {
   Occasion: "occasions",
   Candle: "candles",
   NewsFeed: "newsfeeds",
+  Message: "messages",
 };
 
 const UserTypes = {
@@ -65,10 +69,11 @@ const ValidationMsg = {
   linkEmpty: "Link is required",
   descriptionEmpty: "Description is required",
   incorrectImage: "Please upload an image file (JPG/PNG/JPEG)",
+  messageEmpty: "Message is required",
 };
 
 const ApiResponseCode = {
-  ResponseFail: 0,
+  ResponseFail: 400,
   ClientOrServerError: 400,
   ResponseSuccess: 200,
   AuthError: 401,

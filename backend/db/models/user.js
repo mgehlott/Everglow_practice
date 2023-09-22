@@ -38,6 +38,10 @@ const userSchema = mongoose.Schema(
         },
       ],
     },
+    [TableFields.isDeleted]: {
+      type: Number,
+      default: 0,
+    },
     [TableFields.verificationCode]: {
       type: Number,
     },
@@ -50,6 +54,10 @@ const userSchema = mongoose.Schema(
       type: Date,
       trim: true,
       default: "",
+    },
+    [TableFields.isActive]: {
+      type: Boolean,
+      default: true,
     },
   },
   {
@@ -73,11 +81,12 @@ const userSchema = mongoose.Schema(
 
 userSchema.methods.generateHash = async function (password) {
   password = password + "";
-  console.log(password, typeof password);
+  // console.log(password, typeof password);
   return await bcrypt.hash(password, 8);
 };
 
 userSchema.methods.isValidPassword = async function (password) {
+  console.log("pass", password, this.password);
   return await bcrypt.compare(password.toString(), this.password);
 };
 
